@@ -2,6 +2,9 @@
 """
 @author: MSBak
 """
+
+% https://drive.google.com/file/d/127tRjkH97woQSKbTVAMqFc4JGy4dcC1J/view?usp=sharing
+
 #%%
 def path_load(SE):
     filepath = 'D:\\mscore\\syncbackup\\itch_pain_202101\\woo2101\\'
