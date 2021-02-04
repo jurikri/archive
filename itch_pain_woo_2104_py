@@ -1,0 +1,677 @@
+# -*- coding: utf-8 -*-
+"""
+@author: MSBak
+"""
+#%%
+def path_load(SE):
+    filepath = 'D:\\mscore\\syncbackup\\itch_pain_202101\\woo2101\\'
+    endsw = False
+    
+    if SE == 0:
+        mouse_tag = 's1105-1'
+        day_tag = ['201124 (D19)']
+        scanner_tag = 'g' # g for galvano
+        drug_order = ['cap_5HT']
+        filenames = ['Results_cap_before.csv', \
+                     'Results_cap_1-3.csv', \
+                     'Results_cap_6-8.csv', \
+                     'Results_5HT_before.csv', \
+                     'Results_5HT_1-3.csv', \
+                     'Results_5HT_6-8.csv']
+            
+    elif SE == 1:
+        mouse_tag = 's1111-1'
+        day_tag = ['201202']
+        scanner_tag = 'g' # g for galvano
+        drug_order = ['cap_5HT']
+        # filenames - fix as [cap(base/1/2) - 5HT (base /1/2)]
+        filenames = ['Results_cap_before.csv', \
+                     'Results_cap_1-3.csv', \
+                     'Results_cap_5-7.csv', \
+                     'Results_5HT_before.csv', \
+                     'Results_5HT_1-3.csv', \
+                     'Results_5HT_5-7.csv']
+        
+    elif SE == 2:
+        mouse_tag = 's1113-1'
+        day_tag = ['201208']
+        scanner_tag = 'g' # g for galvano
+        drug_order = ['cap_5HT']
+        filenames = ['Results_cap_before.csv', \
+                     'Results_cap_1-3.csv', \
+                     'Results_cap_5-7.csv', \
+                     'Results_5HT_before.csv', \
+                     'Results_5HT_1-3.csv', \
+                     'Results_5HT_5-7.csv']
+        
+    elif SE == 3:
+        mouse_tag = 's1214-1'
+        day_tag = ['1229']
+        scanner_tag = 'r' # g for galvano
+        drug_order = ['5HT_cap']
+        filenames = ['Results_cap_before.csv', \
+                     'Results_cap_1-3.csv', \
+                     'Results_cap_5-7.csv', \
+                     'Results_5HT_before.csv', \
+                     'Results_5HT_1-3.csv', \
+                     'Results_5HT_5-7.csv']
+        
+    elif SE == 4:
+        mouse_tag = 's1214-1'
+        day_tag = ['1231']
+        scanner_tag = 'r' # g for galvano
+        drug_order = ['cap_5HT']
+        filenames = ['Results_cap_before.csv', \
+                     'Results_cap_1-3.csv', \
+                     'Results_cap_5-7.csv', \
+                     'Results_5HT_before.csv', \
+                     'Results_5HT_1-3.csv', \
+                     'Results_5HT_5-7.csv']
+        
+    elif SE == 5:
+        mouse_tag = 's1214-2'
+        day_tag = ['1229']
+        scanner_tag = 'r' # g for galvano
+        drug_order = ['cap_5HT']
+        filenames = ['Results_cap_before.csv', \
+                     'Results_cap_1-3.csv', \
+                     'Results_cap_5-7.csv', \
+                     'Results_5HT_before.csv', \
+                     'Results_5HT_1-3.csv', \
+                     'Results_5HT_5-7.csv']
+        
+    elif SE == 6:
+        mouse_tag = 's1214-2'
+        day_tag = ['1231']
+        scanner_tag = 'r' # g for galvano
+        drug_order = ['5HT_cap']
+        filenames = ['Results_cap_before.csv', \
+                     'Results_cap_1-3.csv', \
+                     'Results_cap_5-7.csv', \
+                     'Results_5HT_before.csv', \
+                     'Results_5HT_1-3.csv', \
+                     'Results_5HT_5-7.csv']
+
+    else: endsw = True; msdict = {}
+    
+    if not(endsw):
+        msdict = {'filepath': filepath, \
+                  'mouse_tag': mouse_tag, \
+                  'day_tag': day_tag, \
+                  'scanner_tag': scanner_tag, \
+                  'drug_order': drug_order, \
+                  'filenames': filenames}
+    
+    return msdict, endsw
+#%%
+def smoothListGaussian(array1, window=10):  
+     window = round(window)
+     degree = (window+1)/2
+     weight=np.array([1.0]*window)  
+     weightGauss=[]  
+
+     for i in range(window):  
+         i=i-degree+1  
+         frac=i/float(window)  
+         gauss=1/(np.exp((4*(frac))**2))  
+         weightGauss.append(gauss)  
+
+     weight=np.array(weightGauss)*weight  
+     smoothed=[0.0]*(array1.shape[0]-window)
+     
+     weight = weight / np.sum(weight) # nml
+
+     for i in range(len(smoothed)):  
+         smoothed[i]=sum(np.array(array1[i:i+window])*weight)/sum(weight)  
+
+     return smoothed  
+
+def downsampling(msssignal, wanted_size):
+    downratio = msssignal.shape[0]/wanted_size
+    downsignal = np.zeros(wanted_size)
+    downsignal[:] = np.nan
+    for frame in range(wanted_size):
+        s = int(round(frame*downratio))
+        e = int(round(frame*downratio+downratio))
+        downsignal[frame] = np.mean(msssignal[s:e])
+        
+    return np.array(downsignal)
+
+#%%
+import sys; 
+sys.path.append('C:\\Users\\skklab\\Documents\\mscode')
+sys.path.append('D:\\mscore\\code_lab\\')
+import msFunction
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+
+endsw=False; cnt=-1
+while not(endsw):
+    cnt += 1
+    _, endsw = path_load(cnt)
+N = cnt
+
+FPS = 1000 / 309.572
+ws = int(round(10 * (FPS/4.3))) # for gaussian filter
+
+signalss = msFunction.msarray([N,6])
+
+# signalss에 저장
+for SE in tqdm(range(N)):
+    msdict, _ = path_load(SE)
+    filepath = msdict['filepath']
+    mouse_tag = msdict['mouse_tag']
+    day_tag = msdict['day_tag']
+    scanner_tag = msdict['scanner_tag']
+    drug_order = msdict['drug_order']
+    filenames = msdict['filenames']
+
+    for d in day_tag:
+        loadpath = filepath + mouse_tag + '\\' + d + '\\'
+        f = filenames[0]
+        for se, f in enumerate(filenames):
+            if f == '':
+                signalss[SE][se] = [0]
+                
+            elif f != '':
+                df = pd.read_csv(loadpath + f)
+                df = np.array(df)[:,1:]
+                
+                # down sample for resonant
+                if scanner_tag == 'r':
+                    tmp_matrix = []
+                    for ROI in range(df.shape[1]):
+                        tmp = downsampling(df[:,ROI], 390) # 390, the frame size of galvano data 
+                        tmp_matrix.append(tmp)
+                    df = np.transpose(np.array(tmp_matrix))
+                
+                # gaussian filter
+                tmp_matrix = []
+                for ROI in range(df.shape[1]):
+                    tmp = smoothListGaussian(df[:,ROI], window = ws)
+                    tmp_matrix.append(tmp)
+                df = np.transpose(np.array(tmp_matrix))
+                
+                # delta F
+                tmp_matrix = []
+                for ROI in range(df.shape[1]):
+                    mssignal = df[:,ROI]
+                    f0 = np.mean(np.sort(mssignal)[0:int(round(mssignal.shape[0]*0.3))])
+                    tmp = (mssignal - f0) / f0
+                    tmp_matrix.append(tmp)
+                df = np.transpose(np.array(tmp_matrix))
+                signalss[SE][se] = df
+
+#%%
+# 시각화 저장
+
+def visualizaiton_save(runlist, signalss=signalss):
+    savepath = 'D:\\mscore\\syncbackup\\paindecoder\\save\\msplot\\itch_210126\\'
+    print('signal, movement 시각화는', savepath, '에 저장됩니다.')
+    import os; os.chdir(savepath)
+    import matplotlib.pyplot as plt
+    
+    for SE in runlist:
+        print('save msplot', SE)
+        signals = signalss[SE]
+        for se in range(6):
+            signal = np.array(signals[se])
+            plt.figure(SE, figsize=(18, 9))
+            mstitle = 'msplot_' + str(SE) + '_' + str(se) + '.png'
+            if len(signal) == 1: pass
+            elif len(signal) != 0:
+                plt.subplot(311)
+                plt.title(mstitle)
+                for ROI in range(signal.shape[1]):
+                    msplot = signal[:,ROI]
+                    plt.plot(msplot)
+                    scalebar = np.ones(int(round(signal.shape[0]/FPS)))
+                plt.subplot(312)
+                plt.xticks(np.arange(0, scalebar.shape[0]+1, 5.0))
+                    
+                plt.subplot(313)
+                msplot = np.mean(signal, axis=1)
+                plt.plot(msplot)
+                plt.plot(np.zeros(msplot.shape[0]))
+                plt.xticks(np.arange(0, msplot.shape[0]+1, 50.0))
+            plt.savefig(savepath + mstitle)
+            plt.close(SE)
+    plt.close()
+
+visualizaiton_save(runlist=range(N), signalss=signalss)
+
+#signalss[5][0].shape
+#signalss[6][0].shape
+#signalss[3][0].shape
+#signalss[4][0].shape
+
+
+#%%
+
+import scipy
+one_mouse = [[3,4], [5,6]]
+
+sames = []
+diffs = []
+
+for i, SE in enumerate([3,5]):
+    one_mouse_se = one_mouse[i]
+    same_session = one_mouse_se[0]
+    diff_session = one_mouse_se[1]
+    
+    corr_matrix_same = np.zeros((6,6))
+    corr_matrix_diff = np.zeros((6,6))
+    
+    for standard_se in range(6):
+        standard = np.array(signalss[same_session][standard_se])
+        for se in range(6):
+#            delta_same = np.sum(np.abs(np.mean(standard, axis=0) - np.mean(signalss[same_session][se], axis=0)))
+#            delta_diff = np.sum(np.abs(np.mean(standard, axis=0) - np.mean(signalss[diff_session][se], axis=0)))
+            
+            s_same = np.mean(standard, axis=0)
+            e_same = np.mean(signalss[same_session][se], axis=0)
+            
+            s_diff = np.mean(standard, axis=0)
+            e_diff = np.mean(signalss[diff_session][se], axis=0)
+            
+            r_same = scipy.stats.pearsonr(s_same, e_same)[0]
+            r_diff = scipy.stats.pearsonr(s_diff, e_diff)[0]
+
+            corr_matrix_same[standard_se, se] = r_same
+            corr_matrix_diff[standard_se, se] = r_diff
+    
+#    nmr = (np.mean(corr_matrix_same) +  np.mean(corr_matrix_diff)) / 2
+    nmr = 1
+    corr_matrix_same = corr_matrix_same / nmr
+    corr_matrix_diff = corr_matrix_diff / nmr
+    
+    sames.append(corr_matrix_same)
+    diffs.append(corr_matrix_diff)
+
+import matplotlib.pyplot as plt
+
+def vis(sames):
+    plt.figure()
+    sames = np.array(sames)
+    sames_mean = np.mean(sames, axis=0)
+    plt.imshow(sames_mean, cmap='jet')
+    plt.colorbar()
+
+
+
+#%%
+    
+t4 = np.zeros((N,6)) * np.nan
+
+for SE in range(N):
+    for se in range(6):
+        t4[SE,se] = np.mean(signalss[SE][se])
+
+
+#%%
+signalss_ROImean = msFunction.msarray((N,6))
+for SE in range(N):
+    for se in range(6):
+        signalss_ROImean[SE][se] = np.mean(signalss[SE][se], axis=0)
+        
+axiss = msFunction.msarray([5])
+engram = 2
+painse = [1]
+nonpainse = [0,4,5]
+itchse = [4,5]
+nonitchse = [0,1,2]
+
+basese = [0]
+nonbasese = [1,2,4,5]
+
+
+for thr in np.arange(0.00, 0.3, 0.0001):
+    signalss_thr_high = msFunction.msarray((N,6))
+    for SE in  range(N):
+        for se in range(6):
+            signalss_thr_high[SE][se] = signalss_ROImean[SE][se] > thr
+    
+    mssave = msFunction.msarray([4])
+    for j in range(len(one_mouse)): # j 개별 생쥐
+        one_mouse_se = one_mouse[j]
+        roiNum = signalss[one_mouse_se[0]][0].shape[1]
+        pain_merge = []
+        itch_merge = []
+        base_merge = []
+        nonpain_merge = []
+        nonitch_merge = []
+        nonbase_merge = []
+        
+        total_merge = []
+        for i, SE in enumerate(one_mouse_se):
+            for se in range(6):
+                if se in painse: # pain
+                    pain_merge.append(signalss_thr_high[SE][se])
+                if se in itchse: # itch
+                    itch_merge.append(signalss_thr_high[SE][se])
+                if se in basese: # itch
+                    base_merge.append(signalss_thr_high[SE][se])
+                if se in nonpainse: # base
+                    nonpain_merge.append(signalss_thr_high[SE][se])
+                if se in nonitchse: # base
+                    nonitch_merge.append(signalss_thr_high[SE][se])                  
+                if se in nonbasese: # base
+                    nonbase_merge.append(signalss_thr_high[SE][se]) 
+                total_merge.append(signalss_thr_high[SE][se])
+                    
+#        engram = len(one_mouse_se)
+#        reativation_ratio = np.mean(np.sum(np.array(total_merge), axis=0))
+#        sd = np.std(np.sum(np.array(total_merge), axis=0), ddof=1) 
+#        chance = (reativation_ratio + (sd*3)) / (len(one_mouse_se) * 6)
+#        chance = np.min([chance, 1])
+                
+        chance = 1
+        
+        nonpain_merge_sum = np.sum(np.array(nonpain_merge), axis=0) / (len(nonpainse) * len(one_mouse))
+        nonitch_merge_sum = np.sum(np.array(nonitch_merge), axis=0) / (len(nonitchse) * len(one_mouse))
+        nonbase_merge_sum = np.sum(np.array(nonbase_merge), axis=0) / (len(nonbasese) * len(one_mouse))
+        pain_merge_sum = np.sum(np.array(pain_merge), axis=0) / (len(painse) * len(one_mouse))
+        itch_merge_sum = np.sum(np.array(itch_merge), axis=0) / (len(itchse) * len(one_mouse))
+        base_merge_sum = np.sum(np.array(base_merge), axis=0) / (len(basese) * len(one_mouse))
+        
+        pains1 = list(set(np.where(pain_merge_sum >= 1)[0])) 
+        itchs1 = list(set(np.where(itch_merge_sum >= 1)[0]))
+        bases1 = list(set(np.where(base_merge_sum >= 1)[0]))
+        nonpains1 = list(set(np.where(nonpain_merge_sum >= chance)[0]))
+        nonitchs1 = list(set(np.where(nonitch_merge_sum >= chance)[0]))
+        nonbases1 = list(set(np.where(nonbase_merge_sum >= chance)[0]))
+        
+        pains = list(set(pains1) - set(nonpains1))
+        itchs = list(set(itchs1) - set(nonitchs1))
+        boths = list((set(pains) & set(itchs)))
+        bases = list(set(bases1) - set(nonbases1))
+#        
+#        pains = list(set(pains1) - set(itchs1) - set(bases1))
+#        itchs = list(set(itchs1) - set(bases1) - set(pains1))
+#        boths = list((set(pains1) & set(itchs1)) - set(bases1)) 
+        
+        mssave[0].append(len(boths)/roiNum)
+        mssave[1].append(len(pains)/roiNum)
+        mssave[2].append(len(itchs)/roiNum)
+        mssave[3].append(len(bases)/roiNum)
+        
+    axiss[0].append(thr)
+    axiss[1].append(np.mean(mssave[0]))
+    axiss[2].append(np.mean(mssave[1]))
+    axiss[3].append(np.mean(mssave[2]))
+    axiss[4].append(np.mean(mssave[3]))
+
+plt.figure()
+plt.plot(axiss[0], axiss[1], label='both')
+plt.plot(axiss[0], axiss[2], label='pain')
+plt.plot(axiss[0], axiss[3], label='itch')
+plt.plot(axiss[0], axiss[4], label='base')
+plt.legend()
+
+import sys; sys.exit()
+
+#%%
+
+
+
+
+#%%
+
+try: import pickle5 as pickle
+except: import pickle
+# var import
+with open('D:\\mscore\\syncbackup\\google_syn\\mspickle.pickle', 'rb') as f:  # Python 3: open(..., 'rb')
+    msdata_load = pickle.load(f)
+    
+FPS = msdata_load['FPS']
+N = msdata_load['N']
+bahavss = msdata_load['bahavss']
+behavss2 = msdata_load['behavss2']
+msGroup = msdata_load['msGroup']
+msdir = msdata_load['msdir']
+signalss = msdata_load['signalss']
+    
+highGroup = msGroup['highGroup']
+midleGroup = msGroup['midleGroup']
+lowGroup = msGroup['lowGroup']
+salineGroup = msGroup['salineGroup']
+restrictionGroup = msGroup['restrictionGroup']
+ketoGroup = msGroup['ketoGroup']
+lidocainGroup = msGroup['lidocaineGroup']
+capsaicinGroup = msGroup['capsaicinGroup']
+yohimbineGroup = msGroup['yohimbineGroup']
+pslGroup = msGroup['pslGroup']
+shamGroup = msGroup['shamGroup']
+adenosineGroup = msGroup['adenosineGroup']
+highGroup2 = msGroup['highGroup2']
+CFAgroup = msGroup['CFAgroup']
+chloroquineGroup = msGroup['chloroquineGroup']
+itSalineGroup = msGroup['itSalineGroup']
+itClonidineGroup = msGroup['itClonidineGroup']
+ipsaline_pslGroup = msGroup['ipsaline_pslGroup']
+ipclonidineGroup = msGroup['ipclonidineGroup']
+gabapentinGroup = msGroup['gabapentinGroup']
+PSLscsaline = msGroup['PSLscsaline']
+glucoseGroup = msGroup['glucoseGroup']
+highGroup3 =  msGroup['highGroup3']
+
+msset = msGroup['msset']; msset = np.array(msset)
+msset2 = msGroup['msset2']; msset2 = np.array(msset2)
+del msGroup['msset']; del msGroup['msset2']
+msset_total = np.array(pd.concat([pd.DataFrame(msset), pd.DataFrame(msset2)], ignore_index=True, axis=0))
+
+# se3set = capsaicinGroup + pslGroup + shamGroup + adenosineGroup + CFAgroup + chloroquineGroup \
+# + itSalineGroup + itClonidineGroup # for test only
+
+# pslset = pslGroup + shamGroup + adenosineGroup + itSalineGroup + itClonidineGroup
+fset  = highGroup + midleGroup + yohimbineGroup + ketoGroup + highGroup2 
+baseonly = lowGroup + lidocainGroup + restrictionGroup
+gababase = list(range(164,169)) + list(range(172,176)) + list(range(177,183)) + [226,227]
+
+grouped_total_list = []
+keylist = list(msGroup.keys())
+for k in range(len(keylist)):
+    grouped_total_list += msGroup[keylist[k]]
+totaldataset = grouped_total_list
+
+
+#%%
+
+one_mouse = highGroup3
+
+signalss_ROImean = msFunction.msarray((N,5))
+for SE in range(N):
+    for se in range(5):
+        signalss_ROImean[SE][se] = np.mean(signalss[SE][se], axis=0)
+        
+axiss = msFunction.msarray([4])
+engram = 1
+for thr in np.arange(0.001, 2, 0.01):
+    signalss_thr_high = msFunction.msarray((N,6))
+    for SE in  range(N):
+        for se in range(5):
+            signalss_thr_high[SE][se] = signalss_ROImean[SE][se] > thr
+    
+    for i, SE in enumerate(highGroup3):
+        mssave = msFunction.msarray([3])
+        roiNum = signalss[one_mouse_se[0]][0].shape[1]
+        pain_merge = []
+        itch_merge = []
+        base_merge = []
+        
+        for se in range(5):
+            if se in [1]: # pain
+                pain_merge.append(signalss_thr_high[SE][se])
+            elif se in [1]: # itch
+                itch_merge.append(signalss_thr_high[SE][se])
+            elif se in [0]: # base
+                base_merge.append(signalss_thr_high[SE][se])
+        
+        base_merge = np.sum(np.array(base_merge), axis=0)
+        pain_merge_sum = np.sum(np.array(pain_merge), axis=0) - (base_merge * 1)
+        itch_merge_sum = np.sum(np.array(itch_merge), axis=0) - (base_merge * 1)
+        both_merge_sum = pain_merge_sum + itch_merge_sum
+        
+        boths = np.where(both_merge_sum >= engram*2)[0]
+        pains = list(set(np.where(pain_merge_sum >= engram*1)[0])) # - set(boths))
+        itchs = list(set(np.where(itch_merge_sum >= engram*1)[0])) # - set(boths))
+        
+        mssave[0].append(len(boths)/roiNum)
+        mssave[1].append(len(pains)/roiNum)
+        mssave[2].append(len(itchs)/roiNum)
+        
+    axiss[0].append(thr)
+    axiss[1].append(np.mean(mssave[0]))
+    axiss[2].append(np.mean(mssave[1]))
+    axiss[3].append(np.mean(mssave[2]))
+
+plt.figure()
+plt.plot(axiss[0], axiss[1], label='both')
+plt.plot(axiss[0], axiss[2], label='pain')
+plt.plot(axiss[0], axiss[3], label='itch')
+plt.legend()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
