@@ -39,6 +39,7 @@ def ms_smooth(mssignal=None, ws=None):
         msout[t] = np.mean(mssignal[s:e])
     return msout
 
+ROI = 0
 for ROI in range(roinum):
     baseratio = 0.05
     msout = ms_smooth(mssignal=allo[:,ROI], ws=3)
@@ -53,58 +54,44 @@ for ROI in range(roinum):
         plt.plot(np.ones(msout.shape[0]) * mean)
         plt.plot(np.ones(msout.shape[0]) * cut)
         
-    # 분리된 언덕 시작과 끝 정하기
-    segments = []
-    e = -np.inf
-    for f in range(msout.shape[0]):
-        if f <= e: continue
+    # peak check
+
+    diff = msout[1:] - msout[:-1]
+    # plt.plot(msout); plt.plot(diff)
     
-        if msout[f] > cut: 
-            s = int(f)
-            for f2 in range(s+1, msout.shape[0]):
-                if msout[f2] <= cut or f2 == msout.shape[0]-1: 
-                    e = int(f2)
-                    print(s, e)
-                    segments.append([s,e])
-                    break
-            
+    peaks_ix = []; peak_sw = True
+    for k in range(len(diff)):
+        if diff[k] < 0 and msout[k] > cut and peak_sw:
+            peaks_ix.append(int(k))
+            peak_sw = False
+        if diff[k] > 0 and not(peak_sw):
+            peak_sw = True
+    peaks_ix = np.array(peaks_ix)
+
     if False:
-        plt.figure()
-        plt.plot(msout)
-        plt.plot(np.ones(msout.shape[0]) * mean)
-        plt.plot(np.ones(msout.shape[0]) * cut)
-        for j1, j2 in segments:
-            plt.scatter(j1, msout[j1], c='g')
-            plt.scatter(j2, msout[j2], c='r')
-            print(j1, j2)
+        plt.plot(msout); plt.scatter(peaks_ix, msout[peaks_ix], c='r'); plt.plot(np.ones(len(msout)) * cut) 
+        plt.savefig('C:\\mass_save\\itch\\figure1.png', dpi=1000)
+    peaks_ix2 = np.array(peaks_ix)
+    passw = False
+    while True:
+        passw = True
+        for w in range(len(peaks_ix2)-1):
+            first = msout[peaks_ix2[w]]
+            second = msout[peaks_ix2[w+1]]
+            minimum = np.min(msout[peaks_ix2[w]:peaks_ix2[w+1]])
             
-    for j in range(len(segments)):
-        s = segments[j][0]
-        e = segments[j][1]
-        
-        seg = msout[s:e]
-        diff = seg[1:] - seg[:-1]
-        # plt.plot(seg); plt.plot(diff)
-        
-        k2 = -np.inf
-        for k in range(len(diff)):
-            if k <= k2: continue
-        
-            if diff[k] < 0:
-                peak = int(k)
-                for k2 in range(k+1, len(diff)):
-                    if diff[k2] > 0:
-                        rebound = int(k)
-                        break
-    
-    
-    
-    
-
-
-
-
-
+            # print(w, first, second, minimum)
+            
+            if np.min([first, second]) < minimum*2:
+                minix = np.argmin([first, second])
+                peaks_ix2 = np.delete(peaks_ix2, w + minix)
+                passw = False
+                break
+        print(peaks_ix2)
+        if passw: break
+    if False:
+        plt.plot(msout); plt.scatter(peaks_ix2, msout[peaks_ix2], c='r'); plt.plot(np.ones(len(msout)) * cut)
+        plt.savefig('C:\\mass_save\\itch\\figure2.png', dpi=1000)
 
 
 
