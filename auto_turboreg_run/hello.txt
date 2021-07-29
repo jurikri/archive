@@ -1,0 +1,4 @@
+run("Bio-Formats Importer", "open=C:/mass_save/auto_turboreg_run/work/D12.oir " + "autoscale color_mode=Default"); saveAs("Tiff", "C:/mass_save/auto_turboreg_run/work/D12.oir.tif ");
+run("Bio-Formats Importer", "open=C:/mass_save/auto_turboreg_run/work/D8_0001.oir " + "autoscale color_mode=Default"); saveAs("Tiff", "C:/mass_save/auto_turboreg_run/work/D8_0001.oir.tif ");
+run("Bio-Formats Importer", "open=C:/mass_save/auto_turboreg_run/work/Image5_Sham_D10_M10.oir " + "autoscale color_mode=Default"); saveAs("Tiff", "C:/mass_save/auto_turboreg_run/work/Image5_Sham_D10_M10.oir.tif ");
+run("Bio-Formats Importer", "open=C:/mass_save/auto_turboreg_run/work/Image6_D11_M_10mig.oir " + "autoscale color_mode=Default"); saveAs("Tiff", "C:/mass_save/auto_turboreg_run/work/Image6_D11_M_10mig.oir.tif ");
