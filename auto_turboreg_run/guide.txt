@@ -16,3 +16,6 @@ ij 키고, [ 눌러서 macro 창 열고, 복 붙 한뒤 ij macro로 설정하고
 
 (5분 정도 걸림.)
 -> 끝
+
+동영상
+https://drive.google.com/file/d/1Xp8A0Ggilp9v2sWujVsS25jn07wVlMo3/view?usp=sharing
