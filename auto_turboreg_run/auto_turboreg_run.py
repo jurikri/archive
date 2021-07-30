@@ -8,7 +8,7 @@ Created on Thu Jul 29 14:05:21 2021
 
 #%% oir -> tif
 import os
-path = 'C:\\mass_save\\auto_turboreg_run\\work'
+path = 'C:\\mass_save\\auto_turboreg_run\\work2'
 
 # must follow these rules!
 # 1. C: <- should be typed mannualy. Do not copy and paste!
@@ -64,15 +64,17 @@ for i in range(len(listsave)):
     # register to mean image
     start = time.time()  
     out_mean = sr.register_transform_stack(img0, reference='mean')
-    print("time :", time.time() - start) 
+    print("time :", time.time() - start, 's') 
     # print(np.mean(np.std(out_mean, axis=0)))
     out_mean2 = np.array(out_mean, dtype='uint16')
     imageio.mimwrite(filepath + '_reg.tif', out_mean2)
     print('save as', filepath + '_reg.tif')
+    
+    
 
 #%% validation
-if False:
-    filepath = path + '\\' + 'Image5_Sham_D10_M10_reg.tif'
+if True:
+    filepath = 'C:\\mass_save\\auto_turboreg_run\\' + 'Image5_Sham_D10_M10_reg.tif'
     img1 = io.imread(filepath) # 3 dimensions : frames x width x height
     print(np.mean(np.std(img1, axis=0)))
     
@@ -80,6 +82,9 @@ if False:
     plt.plot(np.std(img0, axis=0).flatten(),alpha=0.7, label='original')
     plt.plot(np.std(img1, axis=0).flatten(),alpha=0.5, label='image J')
     plt.legend()
+    
+    filepath = 'C:\\mass_save\\auto_turboreg_run\\work\\' + 'Image5_Sham_D10_M10.oir.tif_reg.tif'
+    out_mean = io.imread(filepath) # 3 dimensions : frames x width x height
     
     plt.figure()
     plt.plot(np.std(out_mean, axis=0).flatten(),alpha=0.7, label='python')
