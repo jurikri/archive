@@ -50,7 +50,7 @@ def msarray(listlike, nonesw=False):
                             
     return out
 
-def msROC(class0, class1, repeat=1):
+def msROC(class0, class1, repeat=1, pcolor=None, mslabel=''):
     import numpy as np
     from sklearn import metrics
     import matplotlib.pyplot as plt
@@ -74,17 +74,22 @@ def msROC(class0, class1, repeat=1):
         sz = 1
         fig = plt.figure(1, figsize=(7*sz, 5*sz))
         lw = 2
-        plt.plot(fpr, tpr, color='darkorange',
-                 lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+        if pcolor is None:
+            plt.plot(fpr, tpr, color='darkorange',
+                     lw=lw, label='ROC curve (area = %0.2f)' % roc_auc)
+        else:
+            plt.plot(fpr, tpr, color=pcolor,
+                     lw=lw, label=mslabel + ' ' + str(round(roc_auc, 2)))
+            
         plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
     #        plt.title('ROC')
-        # plt.legend(loc="lower right")
+        plt.legend(loc="lower right")
         # plt.show()
-        
+
     return accuracy, roc_auc, fig
 
 def ms_smooth(mssignal=None, ws=None):
@@ -96,17 +101,22 @@ def ms_smooth(mssignal=None, ws=None):
         msout[t] = np.mean(mssignal[s:e])
     return msout
 
-# def downsampling(msssignal, wanted_size): # scipy.signal.resample 로 대체
-#     import numpy as np
-#     downratio = msssignal.shape[0]/wanted_size
-#     downsignal = np.zeros(wanted_size)
-#     downsignal[:] = np.nan
-#     for frame in range(wanted_size):
-#         s = int(round(frame*downratio))
-#         e = int(round(frame*downratio+downratio))
-#         downsignal[frame] = np.mean(msssignal[s:e])
+
+def downsampling(mssignal, wanted_size): # scipy.signal.resample 로 대체
+    import numpy as np
+    
+    if len(mssignal.shape)==1:
+        mssignal = np.reshape(mssignal, (1,mssignal.shape[0]))
+    
+    downratio = mssignal.shape[1]/wanted_size
+    downsignal = np.zeros((mssignal.shape[0], int(wanted_size))) * np.nan
+
+    for frame in range(int(wanted_size)):
+        s = int(round(frame*downratio))
+        e = int(round(frame*downratio+downratio))
+        downsignal[:, frame] = np.mean(mssignal[:,s:e], axis=1)
         
-#     return np.array(downsignal)
+    return np.array(downsignal)
 
 def mslinear_regression(x,y):
     import numpy as np
@@ -166,7 +176,52 @@ def ms_wavelet(xdata=None, SR=None): # 확인 후 속도 개선
     msout = np.array(msout)
     return msout
 
+def ms_wavelet2(xdata=None, SR=None): # 확인 후 속도 개선
+    import numpy as np
+    # input shape -> trial x xlen x channel
+    # SR = 1000
 
+    tn = xdata.shape[0]
+    xlen = xdata.shape[1]
+    cn = xdata.shape[2]
+    
+    msout = []
+    min_freq =  1;
+    max_freq = 100;
+    num_frex = 80                                ;
+    frex = np.linspace(min_freq,max_freq,num_frex);
+    
+    range_cycles = [4, 10];
+    beta0 = np.log10(range_cycles[0])
+    beta1 = np.log10(range_cycles[1])
+
+    s = np.logspace(beta0, beta1, num_frex) / (2*np.pi*frex)
+    wavtime = np.arange(-2,2,1/SR)
+    half_wave = int((len(wavtime))/2)
+    
+    nWave = len(wavtime)
+    nData = xlen
+    nConv = nWave + nData - 1
+        
+    for channel2use in range(cn):
+        tf = np.zeros((len(frex), xlen, tn)) * np.nan;
+        
+        for fi in range(len(frex)):
+            # create wavelet and get its FFT
+            # the wavelet doesn't change on each trial...
+            wavelet  = np.exp(2*1j*np.pi*frex[fi] * wavtime) * np.exp(-wavtime**2 / (2*s[fi]**2));
+
+            waveletX = np.fft.fft(wavelet,n=nConv);
+            waveletX = waveletX / max(waveletX);
+
+            for trial_i in range(tn):
+                dataX = np.fft.fft(xdata[trial_i, :, channel2use], n=nConv)
+                ms_as = np.fft.ifft(waveletX * dataX);
+                ms_as = ms_as[half_wave+1:-half_wave+2];
+                tf[fi,:,trial_i] = np.square(np.abs(ms_as));
+        msout.append(tf)
+    msout = np.array(msout)
+    return msout
     
 
 
