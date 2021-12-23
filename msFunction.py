@@ -50,7 +50,7 @@ def msarray(listlike, nonesw=False):
                             
     return out
 
-def msROC(class0, class1, repeat=1, pcolor=None, mslabel=''):
+def msROC(class0, class1, repeat=1, pcolor=None, mslabel='', figsw=False):
     import numpy as np
     from sklearn import metrics
     import matplotlib.pyplot as plt
@@ -70,7 +70,7 @@ def msROC(class0, class1, repeat=1, pcolor=None, mslabel=''):
         if roc_auc >= 0.5: break
         pos_label = 0
         
-    if True:
+    if figsw:
         sz = 1
         fig = plt.figure(1, figsize=(7*sz, 5*sz))
         lw = 2
