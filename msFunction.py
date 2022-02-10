@@ -70,6 +70,7 @@ def msROC(class0, class1, repeat=1, pcolor=None, mslabel='', figsw=False):
         if roc_auc >= 0.5: break
         pos_label = 0
         
+    msdict = {}
     if figsw:
         sz = 1
         fig = plt.figure(1, figsize=(7*sz, 5*sz))
@@ -88,9 +89,10 @@ def msROC(class0, class1, repeat=1, pcolor=None, mslabel='', figsw=False):
         plt.ylabel('True Positive Rate')
     #        plt.title('ROC')
         plt.legend(loc="lower right")
+        msdict = {'fpr': fpr, 'tpr': tpr, 'roc_auc': roc_auc}
         # plt.show()
 
-    return accuracy, roc_auc, fig
+    return accuracy, roc_auc, fig, msdict
 
 def ms_smooth(mssignal=None, ws=None):
     import numpy as np
