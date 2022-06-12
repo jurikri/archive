@@ -224,8 +224,15 @@ def ms_wavelet2(xdata=None, SR=None): # 확인 후 속도 개선
         msout.append(tf)
     msout = np.array(msout)
     return msout
-    
 
+def ms_minmax(X): # [0,1]
+    X = np.array(X)
+    msmin = np.min(X)
+    msmax = np.max(X)
+    
+    X_std = (X - msmin) / (msmax - msmin)
+    X_scaled = X_std * (1 - 0) + 0
+    return X_scaled
 
 
 
