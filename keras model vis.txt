@@ -2,5 +2,5 @@
 # conda install graphviz
 
 from keras.utils import plot_model
-plot_model(model, show_shapes=True, to_file='pre_model.png')
+plot_model(model, show_shapes=True, to_file='pre_model.png', dpi=300)
 plot_model(model, to_file='model.png')
