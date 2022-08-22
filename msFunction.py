@@ -7,6 +7,9 @@ Created on Mon Oct 19 15:19:13 2020
 
 #%%
 
+# 20220822
+
+
 import numpy as np
 
 def nanex(array1):
@@ -234,8 +237,12 @@ def ms_minmax(X): # [0,1]
     X_scaled = X_std * (1 - 0) + 0
     return X_scaled
 
-
-
+def createFolder(directory):    
+    try:        
+        if not os.path.exists(directory):            
+            os.makedirs(directory)    
+    except OSError:        
+        print ('Error: Creating directory. ' +  directory)
 
 
 
