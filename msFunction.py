@@ -11,6 +11,7 @@ Created on Mon Oct 19 15:19:13 2020
 
 
 import numpy as np
+import os
 
 def nanex(array1):
     array1 = np.array(array1)
@@ -238,7 +239,7 @@ def ms_minmax(X): # [0,1]
     X_scaled = X_std * (1 - 0) + 0
     return X_scaled
 
-def createFolder(directory):    
+def createFolder(directory):
     try:        
         if not os.path.exists(directory):            
             os.makedirs(directory)    
