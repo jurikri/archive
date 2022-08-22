@@ -93,7 +93,7 @@ def msROC(class0, class1, repeat=1, pcolor=None, mslabel='', figsw=False):
         plt.ylabel('True Positive Rate')
     #        plt.title('ROC')
         plt.legend(loc="lower right")
-        msdict = {'fpr': fpr, 'tpr': tpr, 'roc_auc': roc_auc}
+        msdict = {'fpr': fpr, 'tpr': tpr, 'roc_auc': roc_auc, 'thresholds': thresholds}
         # plt.show()
 
     return accuracy, roc_auc, fig, msdict
