@@ -134,99 +134,100 @@ def mslinear_regression(x,y):
     b = np.mean(y) - np.mean(x)*m
     return m, b # bx+a
 
-def ms_wavelet(xdata=None, SR=None): # 확인 후 속도 개선
-    import numpy as np
-    # input shape -> trial x xlen x channel
-    # SR = 1000
+# ray 사용을 위해, code 내에서 사용하도록 변경함
+# def ms_wavelet(xdata=None, SR=None): # 확인 후 속도 개선
+#     import numpy as np
+#     # input shape -> trial x xlen x channel
+#     # SR = 1000
 
-    tn = xdata.shape[0]
-    xlen = xdata.shape[1]
-    cn = xdata.shape[2]
+#     tn = xdata.shape[0]
+#     xlen = xdata.shape[1]
+#     cn = xdata.shape[2]
     
-    msout = []
-    min_freq =  1;
-    max_freq = 40;
-    num_frex = 40;
-    frex = np.linspace(min_freq,max_freq,num_frex);
+#     msout = []
+#     min_freq =  1;
+#     max_freq = 40;
+#     num_frex = 40;
+#     frex = np.linspace(min_freq,max_freq,num_frex);
     
-    range_cycles = [4, 10];
-    beta0 = np.log10(range_cycles[0])
-    beta1 = np.log10(range_cycles[1])
+#     range_cycles = [4, 10];
+#     beta0 = np.log10(range_cycles[0])
+#     beta1 = np.log10(range_cycles[1])
 
-    s = np.logspace(beta0, beta1, num_frex) / (2*np.pi*frex)
-    wavtime = np.arange(-2,2,1/SR)
-    half_wave = int((len(wavtime))/2)
+#     s = np.logspace(beta0, beta1, num_frex) / (2*np.pi*frex)
+#     wavtime = np.arange(-2,2,1/SR)
+#     half_wave = int((len(wavtime))/2)
     
-    nWave = len(wavtime)
-    nData = xlen
-    nConv = nWave + nData - 1
+#     nWave = len(wavtime)
+#     nData = xlen
+#     nConv = nWave + nData - 1
         
-    for channel2use in range(cn):
-        tf = np.zeros((len(frex), xlen, tn)) * np.nan;
+#     for channel2use in range(cn):
+#         tf = np.zeros((len(frex), xlen, tn)) * np.nan;
         
-        for fi in range(len(frex)):
-            # create wavelet and get its FFT
-            # the wavelet doesn't change on each trial...
-            wavelet  = np.exp(2*1j*np.pi*frex[fi] * wavtime) * np.exp(-wavtime**2 / (2*s[fi]**2));
+#         for fi in range(len(frex)):
+#             # create wavelet and get its FFT
+#             # the wavelet doesn't change on each trial...
+#             wavelet  = np.exp(2*1j*np.pi*frex[fi] * wavtime) * np.exp(-wavtime**2 / (2*s[fi]**2));
 
-            waveletX = np.fft.fft(wavelet,n=nConv);
-            waveletX = waveletX / max(waveletX);
+#             waveletX = np.fft.fft(wavelet,n=nConv);
+#             waveletX = waveletX / max(waveletX);
 
-            for trial_i in range(tn):
-                dataX = np.fft.fft(xdata[trial_i, :, channel2use], n=nConv)
-                ms_as = np.fft.ifft(waveletX * dataX);
-                ms_as = ms_as[half_wave+1:-half_wave+2];
-                tf[fi,:,trial_i] = np.square(np.abs(ms_as));
-        msout.append(tf)
-    msout = np.array(msout)
-    return msout
+#             for trial_i in range(tn):
+#                 dataX = np.fft.fft(xdata[trial_i, :, channel2use], n=nConv)
+#                 ms_as = np.fft.ifft(waveletX * dataX);
+#                 ms_as = ms_as[half_wave+1:-half_wave+2];
+#                 tf[fi,:,trial_i] = np.square(np.abs(ms_as));
+#         msout.append(tf)
+#     msout = np.array(msout)
+#     return msout
 
-def ms_wavelet2(xdata=None, SR=None): # 확인 후 속도 개선
-    import numpy as np
-    # input shape -> trial x xlen x channel
-    # SR = 1000
+# def ms_wavelet2(xdata=None, SR=None): # 확인 후 속도 개선
+#     import numpy as np
+#     # input shape -> trial x xlen x channel
+#     # SR = 1000
 
-    tn = xdata.shape[0]
-    xlen = xdata.shape[1]
-    cn = xdata.shape[2]
+#     tn = xdata.shape[0]
+#     xlen = xdata.shape[1]
+#     cn = xdata.shape[2]
     
-    msout = []
-    min_freq =  1;
-    max_freq = 100;
-    num_frex = 80                                ;
-    frex = np.linspace(min_freq,max_freq,num_frex);
+#     msout = []
+#     min_freq =  1;
+#     max_freq = 100;
+#     num_frex = 80                                ;
+#     frex = np.linspace(min_freq,max_freq,num_frex);
     
-    range_cycles = [4, 10];
-    beta0 = np.log10(range_cycles[0])
-    beta1 = np.log10(range_cycles[1])
+#     range_cycles = [4, 10];
+#     beta0 = np.log10(range_cycles[0])
+#     beta1 = np.log10(range_cycles[1])
 
-    s = np.logspace(beta0, beta1, num_frex) / (2*np.pi*frex)
-    wavtime = np.arange(-2,2,1/SR)
-    half_wave = int((len(wavtime))/2)
+#     s = np.logspace(beta0, beta1, num_frex) / (2*np.pi*frex)
+#     wavtime = np.arange(-2,2,1/SR)
+#     half_wave = int((len(wavtime))/2)
     
-    nWave = len(wavtime)
-    nData = xlen
-    nConv = nWave + nData - 1
+#     nWave = len(wavtime)
+#     nData = xlen
+#     nConv = nWave + nData - 1
         
-    for channel2use in range(cn):
-        tf = np.zeros((len(frex), xlen, tn)) * np.nan;
+#     for channel2use in range(cn):
+#         tf = np.zeros((len(frex), xlen, tn)) * np.nan;
         
-        for fi in range(len(frex)):
-            # create wavelet and get its FFT
-            # the wavelet doesn't change on each trial...
-            wavelet  = np.exp(2*1j*np.pi*frex[fi] * wavtime) * np.exp(-wavtime**2 / (2*s[fi]**2));
+#         for fi in range(len(frex)):
+#             # create wavelet and get its FFT
+#             # the wavelet doesn't change on each trial...
+#             wavelet  = np.exp(2*1j*np.pi*frex[fi] * wavtime) * np.exp(-wavtime**2 / (2*s[fi]**2));
 
-            waveletX = np.fft.fft(wavelet,n=nConv);
-            waveletX = waveletX / max(waveletX);
+#             waveletX = np.fft.fft(wavelet,n=nConv);
+#             waveletX = waveletX / max(waveletX);
 
-            for trial_i in range(tn):
-                dataX = np.fft.fft(xdata[trial_i, :, channel2use], n=nConv)
-                ms_as = np.fft.ifft(waveletX * dataX);
-                ms_as = ms_as[half_wave+1:-half_wave+2];
-                tf[fi,:,trial_i] = np.square(np.abs(ms_as));
-        msout.append(tf)
-    msout = np.array(msout)
-    return msout
+#             for trial_i in range(tn):
+#                 dataX = np.fft.fft(xdata[trial_i, :, channel2use], n=nConv)
+#                 ms_as = np.fft.ifft(waveletX * dataX);
+#                 ms_as = ms_as[half_wave+1:-half_wave+2];
+#                 tf[fi,:,trial_i] = np.square(np.abs(ms_as));
+#         msout.append(tf)
+#     msout = np.array(msout)
+#     return msout
 
 def ms_minmax(X): # [0,1]
     X = np.array(X)
